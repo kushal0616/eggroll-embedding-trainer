@@ -288,31 +288,110 @@ elif variance > target * 2.0:
 
 ## Experimental Results
 
-### English: NanoMSMARCO
+We conducted experiments comparing EGGROLL (Evolution Strategies) against traditional gradient-based contrastive learning on two datasets: English (NanoMSMARCO) and Korean (Ko-StrategyQA).
+
+### Results Summary
+
+#### English: NanoMSMARCO
 
 | Method | Train NDCG@10 | Val NDCG@10 | Best Val | Notes |
 |--------|---------------|-------------|----------|-------|
-| **EGGROLL** | 0.3222 | 0.1257 | **0.1540** | Healthy train-val gap |
+| **EGGROLL (ES)** | 0.3222 | 0.1257 | **0.1540** | Healthy train-val gap |
 | Baseline (Contrastive) | 1.0000 | 0.0972 | 0.1257 | Complete overfit |
 
-**EGGROLL wins by +22.5% on validation.**
-
-### Korean: Ko-StrategyQA
+#### Korean: Ko-StrategyQA
 
 | Method | Train NDCG@10 | Val NDCG@10 | Best Val | Notes |
 |--------|---------------|-------------|----------|-------|
-| **EGGROLL** | 0.9183 | **0.7630** | **0.7697** | Strong generalization |
+| **EGGROLL (ES)** | 0.9183 | **0.7630** | **0.7697** | Strong generalization |
 | Baseline (Contrastive) | 1.0000 | 0.7468 | 0.7527 | Overfit pattern |
 
-**EGGROLL wins by +2.3% on validation.**
+---
 
-### Key Finding
+### Key Findings
 
-The gradient-based baseline **always overfits** (Train=1.0) while EGGROLL maintains a healthy train-validation gap. This demonstrates that:
+#### 1. EGGROLL Generalizes Better
 
-1. **Direct NDCG optimization** avoids the surrogate loss mismatch
-2. **Evolution strategies** provide implicit regularization through noisy exploration
-3. The pattern holds **across languages** (English and Korean)
+The most striking observation is the **overfitting behavior** of gradient-based methods:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         OVERFITTING COMPARISON                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Gradient-Based Contrastive:
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ Train NDCG: ████████████████████████████████████████████████ 1.0000  │
+  │ Val NDCG:   █████████                                        0.0972  │
+  └──────────────────────────────────────────────────────────────────────┘
+  → Train=1.0 means PERFECT memorization of training data
+  → Huge gap indicates severe overfitting
+
+  EGGROLL (Evolution Strategies):
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │ Train NDCG: ████████████████                                 0.3222  │
+  │ Val NDCG:   ██████                                           0.1257  │
+  └──────────────────────────────────────────────────────────────────────┘
+  → Modest train score indicates the model is NOT memorizing
+  → Smaller train-val gap indicates better generalization
+```
+
+**Why does this happen?**
+
+| Method | Optimization Target | Side Effect |
+|--------|---------------------|-------------|
+| **Contrastive** | Maximize similarity for positive pairs, minimize for negatives | Learns to perfectly separate train examples (memorization) |
+| **EGGROLL** | Maximize NDCG directly via noisy exploration | Noise injection acts as implicit regularization |
+
+The gradient-based baseline achieves **Train NDCG = 1.0** on both datasets — this is a red flag indicating the model has perfectly memorized the training data rather than learning generalizable patterns.
+
+#### 2. EGGROLL Wins on Validation
+
+Despite lower training scores, EGGROLL achieves **higher validation performance**:
+
+| Dataset | EGGROLL Best Val | Baseline Best Val | Improvement |
+|---------|------------------|-------------------|-------------|
+| English (NanoMSMARCO) | 0.1540 | 0.1257 | **+22.5%** |
+| Korean (Ko-StrategyQA) | 0.7697 | 0.7527 | **+2.3%** |
+
+This confirms our hypothesis: **directly optimizing the target metric (NDCG) leads to better generalization than optimizing a surrogate loss (contrastive).**
+
+#### 3. Cross-Lingual Consistency
+
+The same pattern holds across both English and Korean:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     CROSS-LINGUAL RESULTS                                │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  English (NanoMSMARCO)                    Korean (Ko-StrategyQA)
+  ┌────────────────────────┐               ┌────────────────────────┐
+  │ EGGROLL    → 0.1540    │               │ EGGROLL    → 0.7697    │
+  │ Baseline   → 0.1257    │               │ Baseline   → 0.7527    │
+  │ Winner: EGGROLL +22.5% │               │ Winner: EGGROLL +2.3%  │
+  └────────────────────────┘               └────────────────────────┘
+```
+
+This demonstrates that:
+- Evolution strategies avoid the gradient-based overfitting trap **regardless of language**
+- Rank-1 ES with fitness shaping works well as a **black-box optimizer** for non-differentiable NDCG
+- The approach is **language-agnostic** — no language-specific tuning required
+
+---
+
+### Why Evolution Strategies Prevent Overfitting
+
+| Factor | Gradient-Based | Evolution Strategies |
+|--------|----------------|---------------------|
+| **Update Signal** | Exact gradients → sharp minima | Noisy estimates → flat minima |
+| **Exploration** | Follows loss surface precisely | Random perturbations explore broadly |
+| **Implicit Regularization** | None (must add explicitly) | Built-in through noise injection |
+| **Objective** | Surrogate loss (contrastive) | True metric (NDCG) |
+
+The **noise injection** in ES acts as a form of **implicit regularization**, similar to dropout or weight noise, but applied at the optimization level rather than the architecture level.
+
+---
 
 ### Hyperparameter Sensitivity
 
