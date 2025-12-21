@@ -1,8 +1,162 @@
 # EGGROLL-NDCG
 
-**Evolution-Guided Gradient-free Ranking Optimization with Listwise Loss**
-
 A PyTorch implementation of gradient-free optimization for directly optimizing NDCG (Normalized Discounted Cumulative Gain) in neural information retrieval systems using Evolution Strategies.
+
+---
+
+## Original Paper: Evolution Strategies at the Hyperscale
+
+> **Paper**: [arXiv:2511.16652](https://arxiv.org/abs/2511.16652)
+>
+> **Authors**: Bidipta Sarkar, Mattie Fellows, Juan Agustin Duque, Alistair Letcher, Antonio León Villares, Anya Sims, Dylan Cope, Jarek Liesen, Lukas Seier, Theo Wolf, Uljad Berdica, Alexander David Goldie, Aaron Courville, Karin Sevegnani, Shimon Whiteson, Jakob Nicolaus Foerster
+
+### TL;DR
+**"Train billion-parameter neural networks without computing a single gradient!"**
+
+---
+
+### The Problem with Backpropagation
+
+Traditional deep learning relies on **backpropagation** to compute gradients. But backprop has fundamental limitations:
+
+| Limitation | Why It Matters |
+|------------|----------------|
+| **Requires differentiable objectives** | Ranking metrics like NDCG, MAP, MRR are non-differentiable! |
+| **Sequential computation** | Must compute forward pass, store activations, then backward pass |
+| **Memory explosion** | Must store all intermediate activations for gradient computation |
+| **Gradient pathologies** | Vanishing/exploding gradients, especially in long sequences |
+
+---
+
+### How Evolution Strategies Learn Without Backprop
+
+This is the key insight: **you don't need gradients to find which direction improves your objective.**
+
+#### The Core Idea: Estimate Gradients by Random Sampling
+
+Instead of computing exact gradients through the chain rule, ES **estimates** the gradient direction by:
+
+```
+1. Add random noise to weights      →  W' = W + σ·ε
+2. Evaluate fitness (forward only!) →  f(W') = NDCG score
+3. Correlate noise with fitness     →  Which noise directions improved the score?
+4. Update weights accordingly       →  W = W + α·(noise that helped)
+```
+
+#### Mathematical Formulation
+
+The gradient of expected fitness can be written as:
+
+```
+∇θ E[f(θ)] = E[f(θ) · ∇θ log p(θ)]
+```
+
+For Gaussian perturbations, this simplifies to:
+
+```
+∇θ E[f(θ + σε)] ≈ (1/σ) · E[f(θ + σε) · ε]
+```
+
+**In plain English**: The gradient direction is approximately the average of "noise vectors weighted by how much they improved the objective."
+
+#### Visual Comparison
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    BACKPROPAGATION (Traditional)                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Input → [Layer 1] → [Layer 2] → [Layer 3] → Loss
+             ↑            ↑            ↑         │
+             │            │            │         │
+             └────────────┴────────────┴─────────┘
+                    Backward Pass (Sequential!)
+
+  • Must store ALL activations
+  • Must compute chain rule through every layer
+  • Loss function MUST be differentiable
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    EVOLUTION STRATEGIES (EGGROLL)                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+           ┌─→ W+σε₁ → Forward → f₁ ─┐
+           │                          │
+  W ───────┼─→ W+σε₂ → Forward → f₂ ──┼─→ Aggregate → Update W
+           │                          │
+           └─→ W+σε₃ → Forward → f₃ ─┘
+
+  • Only forward passes (fully parallel!)
+  • No activation storage needed
+  • Loss function can be ANY black-box metric
+```
+
+#### Why This Works: Intuition
+
+Imagine you're blindfolded on a hill, trying to find the top:
+
+- **Gradient Descent**: Someone tells you the exact slope at your feet (but requires calculus)
+- **Evolution Strategies**: You take random steps in all directions, remember which ones went uphill, then move in the average "uphill" direction
+
+Both eventually reach the top, but ES doesn't need to know the hill's equation!
+
+---
+
+### EGGROLL's Innovation: Low-Rank Perturbations
+
+The paper's key contribution is making ES **scalable** to massive neural networks.
+
+**The Problem**: For a weight matrix W ∈ ℝ^{m×n}, generating full noise matrices costs O(m×n) memory and compute per sample.
+
+**The Solution**: Generate **low-rank** noise instead:
+
+```
+Traditional ES:  W' = W + σ·E           where E ∈ ℝ^{m×n}  (full matrix)
+EGGROLL:         W' = W + σ·(A·Bᵀ)      where A ∈ ℝ^{m×r}, B ∈ ℝ^{n×r}
+```
+
+| Metric | Traditional ES | EGGROLL (rank-r) |
+|--------|---------------|------------------|
+| **Noise Storage** | O(m × n) | O(r × (m + n)) |
+| **Forward Cost** | O(m × n) | O(r × (m + n)) |
+| **Convergence** | Baseline | O(1/r) to full-rank |
+
+**For rank-1 (this implementation)**:
+- Noise is just outer product of two vectors: `E = a ⊗ bᵀ`
+- Memory: O(m + n) — **millions of times smaller!**
+
+---
+
+### Paper's Key Experiments
+
+The paper validates EGGROLL across diverse domains:
+
+| Domain | Task | Key Result |
+|--------|------|------------|
+| **Reinforcement Learning** | MuJoCo, Atari | Matches/exceeds PPO with better parallelization |
+| **LLM Fine-tuning** | Reasoning tasks | Competitive with gradient-based LoRA |
+| **Integer-only Training** | Language modeling | Enables training without floating-point! |
+
+---
+
+### Connection to This Implementation
+
+This **EGGROLL-NDCG** project applies the paper's ideas to **Information Retrieval**:
+
+| Original Paper | This Implementation |
+|----------------|---------------------|
+| General ES framework | IR-specialized implementation |
+| Various objectives | **Direct NDCG optimization** |
+| JAX-based | **PyTorch-based** |
+| Billion-parameter models | Lightweight projection head |
+
+**Why ES for IR?**
+- NDCG involves **sorting and ranking** — fundamentally non-differentiable
+- Traditional methods use surrogate losses (contrastive, cross-entropy) that don't directly optimize ranking
+- EGGROLL treats NDCG as a **black-box fitness function** — optimize exactly what you measure!
+
+---
 
 ## Why EGGROLL?
 
