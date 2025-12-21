@@ -2,6 +2,8 @@
 
 A PyTorch implementation of gradient-free optimization for directly optimizing NDCG (Normalized Discounted Cumulative Gain) in neural information retrieval systems using Evolution Strategies.
 
+<img width="1486" height="1314" alt="image" src="https://github.com/user-attachments/assets/b248257e-0172-4824-afe4-508b9986a854" />
+
 ---
 
 ## Original Paper: Evolution Strategies at the Hyperscale
