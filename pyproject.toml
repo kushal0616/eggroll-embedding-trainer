@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eggroll-ndcg"
+version = "0.1.0"
+description = "EGGROLL for direct NDCG optimization on NanoBEIR"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.36.0",
+    "datasets>=2.14.0",
+    "sentence-transformers>=2.2.0",
+    "numpy>=1.24.0",
+    "pyyaml>=6.0",
+    "wandb>=0.15.0",
+    "tqdm>=4.65.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.3.0",
+    "pytest-cov>=4.1.0",
+]
+
+[project.scripts]
+eggroll-train = "src.train:main"
+eggroll-cache = "scripts.prepare_cache:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "scripts*"]

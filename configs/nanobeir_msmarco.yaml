@@ -1,0 +1,12 @@
+experiment:
+  name: "nanomsmarco_headonly"
+  description: "Head-only EGGROLL training on NanoMSMARCO"
+
+data:
+  task: "NanoMSMARCO"
+
+training:
+  num_steps: 3000
+
+logging:
+  tags: ["msmarco", "head-only"]
